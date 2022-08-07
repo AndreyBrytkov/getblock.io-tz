@@ -9,7 +9,7 @@ import (
 )
 
 func LoadConfig() (*models.Config, error) {
-	buf, err := ioutil.ReadFile(filepath.Join(".", "source", "config.yaml"))
+	buf, err := ioutil.ReadFile(filepath.Join(".", "config", "config.yaml"))
 	if err != nil {
 		return nil, WrapErr("app", "Read config file error", err)
 	}

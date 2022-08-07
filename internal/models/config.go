@@ -8,6 +8,7 @@ type Config struct {
 
 type AppConfig struct {
 	Debug bool `yaml:"debug"`
+	BlockAmount int `yaml:"blockAmount"`
 	Cycle int  `yaml:"cycle"`
 }
 

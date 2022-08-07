@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/AndreyBrytkov/getblock.io-tz/internal/adapter"
@@ -46,16 +45,4 @@ func GetPostgres(l *utils.MyLogger, c *models.StorageConfig) adapter.Storage {
 		config: c,
 		DB:     db,
 	}
-}
-
-func (pg *Postgres) RecordBlock(models.Block) error {
-	return errors.New("NOT IMPLEMENTED")
-}
-
-func (pg *Postgres) RecordTx(models.Trasaction) error {
-	return errors.New("NOT IMPLEMENTED")
-}
-
-func (pg *Postgres) GetMaxDeltaWallet(n int) (string, int, error) {
-	return "", 0, errors.New("NOT IMPLEMENTED")
 }

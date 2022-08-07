@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math/big"
 	"strconv"
 	"strings"
 )
@@ -17,4 +18,12 @@ func HexToUint64(hex string) (uint64, error) {
 
 func Uint64ToHex(n uint64) string {
 	return "0x" + strconv.FormatUint(n, 16)
+}
+
+func PlusOne(i *big.Int) big.Int {
+	result := big.NewInt(0)
+	one := big.NewInt(1)
+	result.Add(i, one)
+
+	return *result
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"sync"
 
+	"github.com/AndreyBrytkov/getblock.io-tz/internal/chainsync"
+	"github.com/AndreyBrytkov/getblock.io-tz/internal/repository"
 	"github.com/AndreyBrytkov/getblock.io-tz/pkg/utils"
 )
 
@@ -21,4 +23,16 @@ func main() {
 	logger.Info(caller, "config loaded...")
 	logger.DebugOn = config.AppConfig.Debug
 
+	repo := repository.GetRepository(logger, config)
+
+	cs := chainsync.GetChainSynchronizer(logger, &config.AppConfig, wg, repo.Api, repo.Storage)
+
+	err = cs.Init()
+	if err != nil {
+		err = utils.WrapErr(caller, "init chainsync error", err)
+		logger.Fatal(err)
+	}
+	
+	wg.Add(1)
+	go cs.Run()
 }
