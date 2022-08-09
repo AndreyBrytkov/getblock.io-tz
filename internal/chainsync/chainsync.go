@@ -8,6 +8,7 @@ import (
 	"github.com/AndreyBrytkov/getblock.io-tz/internal/adapter"
 	"github.com/AndreyBrytkov/getblock.io-tz/internal/models"
 	"github.com/AndreyBrytkov/getblock.io-tz/pkg/utils"
+	"github.com/ubiq/go-ubiq/common/hexutil"
 )
 
 const caller = "chainsync"
@@ -52,7 +53,7 @@ func (cs *ChainSynchronizer) Init() error {
 func (cs *ChainSynchronizer) Run() {
 	cs.logger.Info(caller, "sync started...")
 	defer cs.wg.Done()
-	main:
+
 	for {
 		// Get lastest block number
 		lastest, err := cs.api.GetHeadBlockNum()
@@ -61,38 +62,52 @@ func (cs *ChainSynchronizer) Run() {
 			cs.logger.Fatal(err)
 		}
 
-		blocksToLoad := getBlockNumsToLoad(lastest, cs.lastLoadedBlock)
-		cs.lastLoadedBlock = lastest
+		blocksToLoad := []big.Int{}
+		if lastest.Cmp(&cs.lastLoadedBlock) > 0 {
+			cs.logger.Debug(caller, "calculating blocks between %s and %s", hexutil.EncodeBig(&cs.lastLoadedBlock), hexutil.EncodeBig(&lastest))
+			blocksToLoad = getBlockNumsToLoad(lastest, cs.lastLoadedBlock)
+			cs.lastLoadedBlock = lastest
+		}
+		cs.logger.Debug(caller, "%d blocks to load", len(blocksToLoad))
 
 		for _, blockNum := range blocksToLoad {
 			// Get block
 			block, err := cs.api.GetBlockByNum(blockNum)
 			if err != nil {
 				err = utils.WrapErr(caller, "get block error", err)
-				cs.logger.Error(err)
-				break main
+				cs.logger.Fatal(err)
+				goto exit
 			}
 
 			// Save block in storage
 			err = cs.storage.RecordBlock(*block)
 			if err != nil {
 				err = utils.WrapErr(caller, "save block error", err)
-				cs.logger.Error(err)
-				break main
+				cs.logger.Fatal(err)
+				goto exit
 			}
 		}
 
 		// Wait
 		time.Sleep(time.Duration(cs.config.Cycle) * time.Second)
 	}
+exit:
 	cs.logger.Info(caller, "sync stopped!")
 }
 
 func getBlockNumsToLoad(lastest, lastLoaded big.Int) []big.Int {
 	numList := []big.Int{}
 
-	for num := utils.PlusOne(&lastest); (&num).Cmp(&lastest) == -1 || (&num).Cmp(&lastest) == 0; num = utils.PlusOne(&num){
-		numList = append(numList, num)
+	// newBlockNum := lastLoaded + 1
+	newBlockNum := big.NewInt(0)
+	newBlockNum.Add(&lastLoaded, big.NewInt(1))
+
+	// while newBlockNum <= lastest
+	for newBlockNum.Cmp(&lastest) <= 0 {
+		// fmt.Println("[DEBUG] --:--:-- [CHAINSYNC]: new block to load %d", newBlockNum)
+		numList = append(numList, *newBlockNum)
+		// newBlockNum++
+		newBlockNum.Add(newBlockNum, big.NewInt(1))
 	}
 
 	return numList
