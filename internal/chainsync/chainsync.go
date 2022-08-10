@@ -1,6 +1,7 @@
 package chainsync
 
 import (
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -15,6 +16,7 @@ const caller = "chainsync"
 
 // Main package obgect
 type ChainSynchronizer struct {
+	// client          *jsonrpc.Client
 	logger          *utils.MyLogger
 	config          *models.AppConfig
 	wg              *sync.WaitGroup
@@ -65,7 +67,8 @@ func (cs *ChainSynchronizer) Run() {
 		blocksToLoad := []big.Int{}
 		if lastest.Cmp(&cs.lastLoadedBlock) > 0 {
 			cs.logger.Debug(caller, "calculating blocks between %s and %s", hexutil.EncodeBig(&cs.lastLoadedBlock), hexutil.EncodeBig(&lastest))
-			blocksToLoad = getBlockNumsToLoad(lastest, cs.lastLoadedBlock)
+			blocksToLoad = getBlockNumsToLoad(cs.lastLoadedBlock, lastest)
+			cs.logger.Debug(caller, "blocksToLoad=%v", blocksToLoad)
 			cs.lastLoadedBlock = lastest
 		}
 		cs.logger.Debug(caller, "%d blocks to load", len(blocksToLoad))
@@ -95,7 +98,7 @@ exit:
 	cs.logger.Info(caller, "sync stopped!")
 }
 
-func getBlockNumsToLoad(lastest, lastLoaded big.Int) []big.Int {
+func getBlockNumsToLoad(lastLoaded, lastest big.Int) []big.Int {
 	numList := []big.Int{}
 
 	// newBlockNum := lastLoaded + 1
@@ -104,10 +107,28 @@ func getBlockNumsToLoad(lastest, lastLoaded big.Int) []big.Int {
 
 	// while newBlockNum <= lastest
 	for newBlockNum.Cmp(&lastest) <= 0 {
-		// fmt.Println("[DEBUG] --:--:-- [CHAINSYNC]: new block to load %d", newBlockNum)
+		fmt.Println("[DEBUG] --:--:-- [CHAINSYNC]: new block to load", newBlockNum)
+		// yaBlockNum := newBlockNum
+		// yaBlockNum = yaBlockNum.Add(yaBlockNum, big.NewInt(1))
+		// fmt.Printf("yab = %T %p %v\nnew = %T %p\n", yaBlockNum, yaBlockNum, &yaBlockNum, newBlockNum, newBlockNum)
 		numList = append(numList, *newBlockNum)
 		// newBlockNum++
 		newBlockNum.Add(newBlockNum, big.NewInt(1))
+	}
+
+	return numList
+}
+
+func getBlockNumsToLoad2(lastLoaded, lastest big.Int) []big.Int {
+	numList := []big.Int{}
+
+	diffBig := lastest.Sub(&lastest, &lastLoaded)
+	diff := diffBig.Uint64()
+
+	for i := int64(0); i < int64(diff); i++ {
+		big := big.NewInt(i + 1)
+		newBig := big.Add(&lastLoaded, big)
+		numList = append(numList, *newBig)
 	}
 
 	return numList
