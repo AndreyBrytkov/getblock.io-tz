@@ -2,14 +2,20 @@ package models
 
 type Config struct {
 	AppConfig      `yaml:"app"`
+	ServerConfig   `yaml:"server"`
 	GetBlockConfig `yaml:"getblock"`
 	StorageConfig  `yaml:"storage"`
 }
 
 type AppConfig struct {
-	Debug bool `yaml:"debug"`
-	BlockAmount int `yaml:"blockAmount"`
-	Cycle int  `yaml:"cycle"`
+	Debug       bool `yaml:"debug"`
+	BlockAmount int  `yaml:"blockAmount"`
+	Cycle       int  `yaml:"cycle"`
+}
+
+type ServerConfig struct {
+	Address string `yaml:"address"`
+	Port    int    `yaml:"port"`
 }
 
 type GetBlockConfig struct {

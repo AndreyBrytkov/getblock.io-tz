@@ -6,10 +6,18 @@ import (
 	"github.com/AndreyBrytkov/getblock.io-tz/internal/models"
 )
 
+type Rest interface {
+	Run()
+}
+
+type Usecase interface {
+	GetMaxBalanceDeltaWallet() (string, *big.Int, error)
+}
+
 type Storage interface {
 	RecordBlock(models.Block) error
 	RecordTx(models.Trasaction) error
-	GetMaxDeltaWallet(n int) (string, big.Int, error)
+	GetTransactionsByBlocksRange(from, to big.Int) ([]models.Trasaction, error)
 }
 
 type GetBlockApi interface {

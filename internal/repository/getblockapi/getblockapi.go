@@ -46,7 +46,7 @@ func GetGetBlockApi(logger *utils.MyLogger, config *models.GetBlockConfig) adapt
 }
 
 func (gb *GetBlockApi) GetHeadBlockNum() (big.Int, error) {
-	gb.logger.Debug(caller, "get lastest block...")
+	// gb.logger.Info(caller, "getting lastest block number...")
 	blockNum := big.NewInt(0)
 
 	resp, err := gb.client.Call(context.Background(), RpcMethodBlockNumber)
@@ -63,61 +63,17 @@ func (gb *GetBlockApi) GetHeadBlockNum() (big.Int, error) {
 		return *blockNum, utils.WrapErr(caller, "get block number from response error", err)
 	}
 
-	// // Form request
-	// requestId := time.Now().Unix()
-
-	// body := []byte(fmt.Sprintf(`{
-	// 	"jsonrpc": "2.0",
-	// 	"method": "eth_blockNumber",
-	// 	"params": [],
-	// 	"id": "daegon%d"
-	// }`, requestId))
-
-	// req, err := http.NewRequest(http.MethodPost, GetBlockEndpointETH, bytes.NewBuffer(body))
-	// if err != nil {
-	// 	return *blockNum, utils.WrapErr(caller, "Create request error", err)
-	// }
-	// req.Header.Set("x-api-key", gb.config.Key)
-	// req.Header.Set("Content-Type", "application/json")
-
-	// // Make request
-	// resp, err := http.DefaultClient.Do(req)
-	// if err != nil {
-	// 	return *blockNum, utils.WrapErr(caller, "Get response body error", err)
-	// } else if resp.StatusCode != http.StatusOK {
-	// 	return *blockNum, utils.WrapErr(caller, "", fmt.Errorf("response %d %s", resp.StatusCode, resp.Status))
-	// }
-	// defer resp.Body.Close()
-
-	// // Read response
-	// respBodyBytes, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return *blockNum, utils.WrapErr(caller, "Read response body error", err)
-	// }
-	// gb.logger.Debug(caller, "response:\n%s", string(respBodyBytes))
-
-	// result := make(map[string]string)
-	// err = json.Unmarshal(respBodyBytes, &result)
-	// if err != nil {
-	// 	return *blockNum, utils.WrapErr(caller, "Unmarshal response body error", err)
-	// }
-
-	// numStr, ok := result["result"]
-	// if !ok {
-	// 	return *blockNum, errors.New("unmarshal response body error")
-	// }
-
 	blockNum, err = hexutil.DecodeBig(numStr)
 	if err != nil {
 		return *blockNum, utils.WrapErr(caller, "Decode blockNum to big.Int error", err)
 	}
 
-	gb.logger.Debug(caller, "last block num = %s", hexutil.EncodeBig(blockNum))
+	gb.logger.Debug(caller, "last block number is '%s'", hexutil.EncodeBig(blockNum))
 	return *blockNum, nil
 }
 
 func (gb *GetBlockApi) GetBlockByNum(n big.Int) (*models.Block, error) {
-	gb.logger.Debug(caller, "get block number '%s'", n.String())
+	// gb.logger.Info(caller, "getting block number '%s'", n.String())
 	resp, err := gb.client.Call(context.Background(), RpcMethodGetBlock, hexutil.EncodeBig(&n), true)
 	if err != nil {
 		return nil, utils.WrapErr(caller, "JSON-RPC call 'eth_getBlockByNumber' error", err)
@@ -127,58 +83,12 @@ func (gb *GetBlockApi) GetBlockByNum(n big.Int) (*models.Block, error) {
 		return nil, utils.WrapErr(caller, "JSON-RPC call 'eth_getBlockByNumber' error", err)
 	}
 
-	// gb.logger.Debug(caller, "jsonrpc: %s\nrequest id: %v\nerror: %s\nresult: %v", resp.JSONRPC, resp.ID, resp.Error, resp.Result)
-
 	blockJson := new(BlockJson)
 	err = resp.GetObject(blockJson)
 	if resp.Error != nil {
 		return nil, utils.WrapErr(caller, "get BlockJson object from response error", err)
 	}
 
-	// // Form request
-	// requestId := time.Now().Unix()
-	// gb.logger.Debug(caller, "get block num %s", hexutil.EncodeBig(&n))
-
-	// body := []byte(fmt.Sprintf(`{
-	// 	"jsonrpc": "2.0",
-	// 	"method": "eth_getBlockByNumber",
-	// 	"params": ["%s", true],
-	// 	"id": "daegon%d"
-	// }`, hexutil.EncodeBig(&n), requestId))
-
-	// gb.logger.Debug(caller, "request body:\n%s", string(body))
-
-	// req, err := http.NewRequest(http.MethodPost, GetBlockEndpointETH, bytes.NewBuffer(body))
-	// if err != nil {
-	// 	return nil, utils.WrapErr(caller, "Create request error", err)
-	// }
-	// req.Header.Set("x-api-key", gb.config.Key)
-	// req.Header.Set("Content-Type", "application/json")
-
-	// // Make request
-	// resp, err := http.DefaultClient.Do(req)
-	// if err != nil {
-	// 	return nil, utils.WrapErr(caller, "Get response body error", err)
-	// } else if resp.StatusCode != http.StatusOK {
-	// 	return nil, utils.WrapErr(caller, "", fmt.Errorf("response %d %s", resp.StatusCode, resp.Status))
-	// }
-
-	// // Read response
-	// result := RespBlock{}
-	// err = json.NewDecoder(resp.Body).Decode(&result)
-	// // respBodyBytes, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	return nil, utils.WrapErr(caller, "Read response body error", err)
-	// }
-	// resp.Body.Close()
-
-	// // err = json.Unmarshal(respBodyBytes, &result)
-	// // if err != nil {
-	// // 	return nil, utils.WrapErr(caller, "Unmarshal response body error", err)
-	// // }
-
-	// Decode to models.block's
-	// gb.logger.Debug(caller, "response object:\n%v", blockJson)
 	block := new(models.Block)
 	err = decodeBlockJSON(blockJson, block)
 	if err != nil {
@@ -186,16 +96,6 @@ func (gb *GetBlockApi) GetBlockByNum(n big.Int) (*models.Block, error) {
 	}
 
 	return block, nil
-}
-
-// type RespBlock struct {
-// 	RequestId string    `json:"id"`
-// 	Error     string    `json:"error"`
-// 	Block     BlockJson `json:"result"`
-// }
-type BlockJson1 struct {
-	Number       string            `json:"number"`
-	Transactions []TrasactionJson1 `json:"transactions"`
 }
 
 type BlockJson struct {
@@ -220,14 +120,6 @@ type BlockJson struct {
 	Transactions     []TransactionJson `json:"transactions"`
 	TransactionsRoot string            `json:"transactionsRoot"`
 	Uncles           []interface{}     `json:"uncles"`
-}
-type TrasactionJson1 struct {
-	Idx      string `json:"transactionIndex"`
-	From     string `json:"from"`
-	To       string `json:"to"`
-	Value    string `json:"value"`
-	Gas      string `json:"gas"`
-	GasPrice string `json:"gasPrice"`
 }
 
 type TransactionJson struct {
