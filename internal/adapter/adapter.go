@@ -6,6 +6,8 @@ import (
 	"github.com/AndreyBrytkov/getblock.io-tz/internal/models"
 )
 
+//go:generate mockgen -source=./adapter.go -destination=../mocks/mock.go
+
 type Rest interface {
 	Run()
 }

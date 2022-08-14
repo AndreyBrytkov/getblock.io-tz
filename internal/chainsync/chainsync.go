@@ -57,6 +57,7 @@ func (cs *ChainSynchronizer) Run() {
 	defer cs.wg.Done()
 
 	for {
+		time.Sleep(time.Millisecond*500)
 		if time.Now().Unix() < cs.lastSync + int64(cs.config.Cycle) {
 			continue
 		}
@@ -73,7 +74,7 @@ func (cs *ChainSynchronizer) Run() {
 			blocksToLoad = utils.GetBlockNumsToLoad(cs.lastLoadedBlock, lastest)
 			cs.lastLoadedBlock = lastest
 		}
-		cs.logger.Debug(caller, "sync %d block", len(blocksToLoad))
+
 		localWg := &sync.WaitGroup{}
 
 		for _, blockNum := range blocksToLoad {
@@ -95,9 +96,10 @@ func (cs *ChainSynchronizer) Run() {
 					cs.logger.Fatal(err)
 					return
 				}
-				cs.logger.Info(caller, "block '%s' saved in DB", n.String())
+				cs.logger.Debug(caller, "block '%s' saved in DB", n.String())
 			}(localWg, blockNum)
 		}
 		localWg.Wait()
+		cs.logger.Info(caller, "%d new blocks synced", len(blocksToLoad))
 	}
 }
